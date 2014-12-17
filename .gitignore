@@ -1,0 +1,25 @@
+.*.swp
+.build
+
+META.yml
+!META.json
+MYMETA.yml
+MYMETA.json
+blib/
+Build
+_build/
+pm_to_blib
+dist.ini
+MANIFEST
+AnyEvent-Filesys-Notify-*
+MANIFEST.bak
+exp/
+tmp/
+Changes.bak
+t/data
+nytprof*
+.local-v*
+README
+
+# podweaver backups
+*.pm.bak
