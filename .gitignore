@@ -1,6 +1,9 @@
+## Vim
 .*.swp
-.build
+Session.vim
 
+## Perl
+.build
 META.yml
 !META.json
 MYMETA.yml
@@ -13,24 +16,42 @@ dist.ini
 MANIFEST
 AnyEvent-Filesys-Notify-*
 MANIFEST.bak
-exp/
-tmp/
 Changes.bak
 t/data
 nytprof*
 .local-v*
-README
 
 # podweaver backups
 *.pm.bak
 
-# go ignores
-go/pkg/
-go/bin/
-go/src/github.com/
-go/src/clip/copy-mq/copy-mq
-go/src/clip/paste-mq/paste-mq
-go/src/gopkg.in
-go/src/golang.org
-go/src/clip/main
-Session.vim
+## GoLang ignores
+# Compiled Object files, Static and Dynamic libs (Shared Objects)
+*.o
+*.a
+*.so
+
+# Folders
+_obj
+_test
+
+# Architecture specific extensions/prefixes
+*.[568vq]
+[568vq].out
+
+*.cgo1.go
+*.cgo2.c
+_cgo_defun.c
+_cgo_gotypes.go
+_cgo_export.*
+
+_testmain.go
+
+*.exe
+*.test
+*.prof
+^/clip
+
+## General
+README
+exp/
+tmp/
