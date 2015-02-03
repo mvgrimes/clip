@@ -7,7 +7,7 @@ import (
 )
 
 var ClipCmd = &cobra.Command{
-	Use:   "clipx",
+	Use:   "clip",
 	Short: "Copy and paste between remote systems",
 	// Long ``,
 	Run: func(cmd *cobra.Command, args []string) {
