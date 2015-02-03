@@ -23,3 +23,10 @@ README
 
 # podweaver backups
 *.pm.bak
+
+# go ignores
+go/pkg/
+go/bin/
+go/src/github.com/
+go/src/clip/copy-mq/copy-mq
+go/src/clip/paste-mq/paste-mq
