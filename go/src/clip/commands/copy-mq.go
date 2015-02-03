@@ -1,13 +1,12 @@
 package commands
 
 import (
-	// "fmt"
+	"io/ioutil"
 	"log"
 	"os"
-	// "strings"
-	"io/ioutil"
 
 	"github.com/spf13/cobra" // cli
+	"github.com/spf13/viper" // Config file parsing
 	"github.com/streadway/amqp"
 )
 
@@ -15,12 +14,14 @@ var copyCmd = &cobra.Command{
 	Use:   "copy",
 	Short: "Read from STDIN and push to all paste instances",
 	Run: func(cmd *cobra.Command, args []string) {
+		InitializeConfig()
 		push()
 	},
 }
 
 func push() {
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+	// conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+	conn, err := amqp.Dial(viper.GetString("server"))
 	failOnError(err, "Failed to connect to RabbitMQ")
 	defer conn.Close()
 
@@ -29,22 +30,22 @@ func push() {
 	defer ch.Close()
 
 	err = ch.ExchangeDeclare(
-		"logs",   // name
-		"fanout", // type
-		true,     // durable
-		false,    // auto-deleted
-		false,    // internal
-		false,    // no-wait
-		nil,      // arguments
+		viper.GetString("exchange"), // exchange
+		"fanout",                    // type
+		true,                        // durable
+		false,                       // auto-deleted
+		false,                       // internal
+		false,                       // no-wait
+		nil,                         // arguments
 	)
 	failOnError(err, "Failed to declare an exchange")
 
 	body := bodyFrom(os.Args)
 	err = ch.Publish(
-		"logs", // exchange
-		"",     // routing key
-		false,  // mandatory
-		false,  // immediate
+		viper.GetString("exchange"), // exchange
+		"",    // routing key
+		false, // mandatory
+		false, // immediate
 		amqp.Publishing{
 			ContentType: "text/plain",
 			// Body:        []byte(body),
@@ -52,7 +53,9 @@ func push() {
 		})
 	failOnError(err, "Failed to publish a message")
 
-	log.Printf(" [x] Sent %s", body)
+	if viper.GetBool("verbose") {
+		log.Printf(" [x] Sent %s", body)
+	}
 }
 
 func bodyFrom(args []string) []byte {

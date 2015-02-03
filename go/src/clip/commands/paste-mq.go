@@ -1,11 +1,11 @@
 package commands
 
 import (
-	// "fmt"
 	"log"
 	"os/exec"
 
 	"github.com/spf13/cobra" // cli
+	"github.com/spf13/viper" // Config file parsing
 	"github.com/streadway/amqp"
 )
 
@@ -13,12 +13,14 @@ var pasteCmd = &cobra.Command{
 	Use:   "paste",
 	Short: "Watch for copied text and add it to clipboard",
 	Run: func(cmd *cobra.Command, args []string) {
+		InitializeConfig()
 		pull()
 	},
 }
 
 func pull() {
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+	// conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+	conn, err := amqp.Dial(viper.GetString("server"))
 	failOnError(err, "Failed to connect to RabbitMQ")
 	defer conn.Close()
 
@@ -27,13 +29,13 @@ func pull() {
 	defer ch.Close()
 
 	err = ch.ExchangeDeclare(
-		"logs",   // name
-		"fanout", // type
-		true,     // durable
-		false,    // auto-deleted
-		false,    // internal
-		false,    // no-wait
-		nil,      // arguments
+		viper.GetString("exchange"), // exchange
+		"fanout",                    // type
+		true,                        // durable
+		false,                       // auto-deleted
+		false,                       // internal
+		false,                       // no-wait
+		nil,                         // arguments
 	)
 	failOnError(err, "Failed to declare an exchange")
 
@@ -50,7 +52,7 @@ func pull() {
 	err = ch.QueueBind(
 		q.Name, // queue name
 		"",     // routing key
-		"logs", // exchange
+		viper.GetString("exchange"), // exchange
 		false,
 		nil)
 	failOnError(err, "Failed to bind a queue")
@@ -71,19 +73,29 @@ func pull() {
 	go func() {
 		for d := range msgs {
 			key := getKey()
-			plainText, _ := decrypt(key, d.Body)
+			plainText, err := decrypt(key, d.Body)
 
-			log.Printf(" [x] %s", plainText)
+			if err != nil {
+				log.Printf(" [x] error in decrypt: %s", err)
+				continue
+			}
 
-			cmd := exec.Command("pbcopy")
+			if viper.GetBool("Verbose") {
+				log.Printf(" [x] %s", plainText)
+			}
+
+			cmd := exec.Command(viper.GetString("PasteCmd"))
 			cmdIn, _ := cmd.StdinPipe()
-			cmd.Start()
+			err = cmd.Start()
+			failOnError(err, "Unable to run PasteCmd")
 			cmdIn.Write(plainText)
 			cmdIn.Close()
 			cmd.Wait()
 		}
 	}()
 
-	log.Printf(" [*] Waiting for logs. To exit press CTRL+C")
+	if viper.GetBool("Verbose") {
+		log.Printf(" [*] Waiting for logs. To exit press CTRL+C")
+	}
 	<-forever
 }

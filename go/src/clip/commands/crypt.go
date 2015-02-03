@@ -7,10 +7,21 @@ import (
 	"encoding/base64"
 	"errors"
 	"io"
+
+	"github.com/spf13/viper" // Config file parsing
 )
 
 func getKey() []byte {
-	key := []byte("a very very very very secret key") // 32 bytes
+	// key := []byte("a very very very very secret key") // 32 bytes
+	key := []byte(viper.GetString("Key"))
+
+	// Pad with spaces
+	for i := len(key); i < 32; i++ {
+		key = append(key, byte(32))
+	}
+
+	// Truncate
+	key = key[:32]
 	return key
 }
 
