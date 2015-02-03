@@ -49,7 +49,7 @@ _testmain.go
 *.exe
 *.test
 *.prof
-^/clip
+clip
 
 ## General
 README
