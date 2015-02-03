@@ -30,3 +30,7 @@ go/bin/
 go/src/github.com/
 go/src/clip/copy-mq/copy-mq
 go/src/clip/paste-mq/paste-mq
+go/src/gopkg.in
+go/src/golang.org
+go/src/clip/main
+Session.vim
