@@ -1,7 +1,7 @@
 package main
 
 import (
-	"clip/commands"
+	"github.com/mvgrimes/clip/commands"
 )
 
 func main() {
