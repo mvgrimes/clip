@@ -18,15 +18,14 @@ var pasteCmd = &cobra.Command{
 	},
 }
 
-func pull() {
-	// conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
+func connect() (*amqp.Connection, *amqp.Channel, <-chan amqp.Delivery, error) {
 	conn, err := amqp.Dial(viper.GetString("server"))
 	failOnError(err, "Failed to connect to RabbitMQ")
-	defer conn.Close()
+	// defer conn.Close()
 
 	ch, err := conn.Channel()
 	failOnError(err, "Failed to open a channel")
-	defer ch.Close()
+	// defer ch.Close()
 
 	err = ch.ExchangeDeclare(
 		viper.GetString("exchange"), // exchange
@@ -68,34 +67,55 @@ func pull() {
 	)
 	failOnError(err, "Failed to register a consumer")
 
-	forever := make(chan bool)
+	logf(" [=] Connected to queue %s", q.Name)
+
+	return conn, ch, msgs, err
+}
+
+func pull() {
 
 	go func() {
-		for d := range msgs {
-			key := getKey()
-			plainText, err := decrypt(key, d.Body)
+		key := getKey()
 
-			if err != nil {
-				log.Printf(" [x] error in decrypt: %s", err)
-				continue
+		for {
+			conn, ch, msgs, err := connect()
+			failOnError(err, " [x] error connecting")
+			defer conn.Close()
+			defer ch.Close()
+
+			for d := range msgs {
+				plainText, err := decrypt(key, d.Body)
+
+				if err != nil {
+					log.Printf(" [x] error in decrypt: %s", err)
+					continue
+				}
+
+				if viper.GetBool("Verbose") {
+					log.Printf(" [>] %s", plainText)
+				}
+
+				sendToClipboard(plainText)
 			}
 
-			if viper.GetBool("Verbose") {
-				log.Printf(" [x] %s", plainText)
-			}
-
-			cmd := exec.Command(viper.GetString("PasteCmd"))
-			cmdIn, _ := cmd.StdinPipe()
-			err = cmd.Start()
-			failOnError(err, "Unable to run PasteCmd")
-			cmdIn.Write(plainText)
-			cmdIn.Close()
-			cmd.Wait()
+			logf(" [=] Connection closed")
 		}
 	}()
 
-	if viper.GetBool("Verbose") {
-		log.Printf(" [*] Waiting for logs. To exit press CTRL+C")
-	}
+	logf(" [*] Waiting for logs. To exit press CTRL+C")
+	defer logf(" [*] Exiting...")
+
+	forever := make(chan bool)
 	<-forever
+	logf(" [*] Exiting")
+}
+
+func sendToClipboard(text []byte) {
+	cmd := exec.Command(viper.GetString("PasteCmd"))
+	cmdIn, _ := cmd.StdinPipe()
+	err := cmd.Start()
+	failOnError(err, "Unable to run PasteCmd")
+	cmdIn.Write(text)
+	cmdIn.Close()
+	cmd.Wait()
 }
