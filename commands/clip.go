@@ -9,10 +9,12 @@ import (
 var ClipCmd = &cobra.Command{
 	Use:   "clip",
 	Short: "Copy and paste between remote systems",
-	// Long ``,
-	Run: func(cmd *cobra.Command, args []string) {
-		InitializeConfig()
-	},
+	Long: `Copy and paste between remote systems
+	Using RabbitMQ. 
+	`,
+	// Run: func(cmd *cobra.Command, args []string) {
+	// 	InitializeConfig()
+	// },
 }
 
 var clipCmdV *cobra.Command
