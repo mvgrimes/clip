@@ -54,7 +54,7 @@ func push() {
 	failOnError(err, "Failed to publish a message")
 
 	if viper.GetBool("verbose") {
-		log.Printf(" [x] Sent %s", body)
+		log.Printf("[x] Sent %s", body)
 	}
 }
 
